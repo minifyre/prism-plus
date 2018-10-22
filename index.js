@@ -35,6 +35,7 @@ prism.getPeerDependentsMap=function()
 		return peerDependentsMap
 	},{})
 }
+prism.getTheme=async theme=>await fetchFile(prism.getPath('themes',theme))
 prism.load=async function()//core & components list
 {
 	const
