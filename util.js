@@ -1,4 +1,5 @@
 const util={}
+util.addJSExt=url=>url.match(/\.js$/)?url:url+'.js'
 util.asyncMap=function(arr,cb)
 {
 	return arr.reduce(async function(promiseArr,item)

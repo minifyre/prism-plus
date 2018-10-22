@@ -4,6 +4,12 @@ export default prism
 
 const {asyncMap,fetchFile,loadScript}=util
 //core
+prism.getPath=function(type,id)
+{
+	return `./node_modules/prism/`+prism.components[type].meta.path
+	.replace(/{id}/g,id)
+}
+prism.getLanguage=x=>fetchFile(util.addJSExt(prism.getPath('languages',x)))
 prism.getPeerDependents=function(mainLanguage)
 {
 	if(!prism.peerDependentsMap) prism.peerDependentsMap=prism.getPeerDependentsMap()
@@ -30,6 +36,7 @@ prism.getPeerDependentsMap=function()
 		return peerDependentsMap
 	},{})
 }
+prism.getTheme=x=>fetchFile(prism.getPath('themes',x))
 prism.load=async function()//core & components list
 {
 	const
@@ -43,7 +50,7 @@ prism.load=async function()//core & components list
 	if(typeof window!=='undefined') window.Prism=undefined
 
 	//get available langs, themes, & plugins
-
+	//@todo get this before core & use it to determine core path?
 	prism.components=await fetchFile(url+'components.js')
 	.then(body=>new Function('components',body+'return components')())
 
@@ -68,6 +75,7 @@ prism.load=async function()//core & components list
 
 	//load default langs
 	await prism.loadLanguages(['html','css','js','css-extras'])
+
 	return prism
 }
 //without dependencies prevents reloading langs to avoid avoid circular references
@@ -105,7 +113,7 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 
 		delete prism.languages[lang]
 
-		await fetchFile(`./node_modules/prism/components/prism-${lang}.js`)
+		await prism.getLanguage(lang)
 		.then(body=>new Function('Prism',body)(prism))
 
 		// Reload dependents
@@ -131,22 +139,15 @@ prism.loadThemes=async function(...themes2load)
 {
 	const
 	{themes}=prism.components,
-	themeKeys=themes2load.map(function(name)
+	keys=themes2load
+	//don't reload previously loaded/non-existant themes
+	.filter(theme=>prism.themes[theme]===false)
+	.map(function(name)
 	{
 		return themes[name]||
-		Object.entries(themes).find(function([key,theme])
-		{
-			return theme===name||theme.title===name
-		})[0]
-	})
-	//@don't reload previously loaded themes, or themes that don't exist (undefined)
-	.filter(theme=>prism.themes[theme]===false),
-	keyPairs=await asyncMap(themeKeys,async function(theme)
-	{
-		const code=await fetchFile('./node_modules/prism/themes/'+theme+'.css')
-
-		return [theme,code]
+		Object.entries(themes)
+		.find(([key,theme])=>theme===name||theme.title===name)[0]
 	})
 
-	keyPairs.forEach(([key,val])=>prism.themes[key]=val)
+	await asyncMap(keys,async key=>prism.themes[key]=await prism.getTheme(key))
 }
