@@ -4,6 +4,11 @@ export default prism
 
 const {asyncMap,fetchFile,loadScript}=util
 //core
+prism.getPath=function(type,id)
+{
+	return `./node_modules/prism/`+prism.components[type].meta.path
+	.replace(/{id}/g,id)
+}
 prism.getPeerDependents=function(mainLanguage)
 {
 	if(!prism.peerDependentsMap) prism.peerDependentsMap=prism.getPeerDependentsMap()
@@ -43,7 +48,7 @@ prism.load=async function()//core & components list
 	if(typeof window!=='undefined') window.Prism=undefined
 
 	//get available langs, themes, & plugins
-
+	//@todo get this before core & use it to determine core path?
 	prism.components=await fetchFile(url+'components.js')
 	.then(body=>new Function('components',body+'return components')())
 
@@ -68,6 +73,7 @@ prism.load=async function()//core & components list
 
 	//load default langs
 	await prism.loadLanguages(['html','css','js','css-extras'])
+
 	return prism
 }
 //without dependencies prevents reloading langs to avoid avoid circular references
@@ -105,7 +111,8 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 
 		delete prism.languages[lang]
 
-		await fetchFile(`./node_modules/prism/components/prism-${lang}.js`)
+
+		await fetchFile(util.addJSExt(prism.getPath('languages',lang)))
 		.then(body=>new Function('Prism',body)(prism))
 
 		// Reload dependents
