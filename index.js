@@ -1,5 +1,9 @@
-const prism={util:{}}
+import util from './util.js'
+const prism={util}
 export default prism
+
+const {asyncMap,fetchFile,loadScript}=util
+//core
 prism.getPeerDependents=function(mainLanguage)
 {
 	if(!prism.peerDependentsMap) prism.peerDependentsMap=prism.getPeerDependentsMap()
@@ -26,39 +30,44 @@ prism.getPeerDependentsMap=function()
 		return peerDependentsMap
 	},{})
 }
-prism.load=async function()
+prism.load=async function()//core & components list
 {
 	const
 	url='./node_modules/prism/',
-	{err}=await prism.util.loadScript(url+'components/prism-core.js')
+	{err}=await loadScript(url+'components/prism-core.js')
 	if(err) return console.error(err)
-	Object.assign(Prism.util,prism.util)//preserve custom utils
+	Object.assign(Prism.util,util)//preserve custom utils
 	Object.assign(prism,window.Prism)//merge with real prism object
-	window.Prism=undefined
+
+	//remove prism from global scope to be more es6-module-like
+	if(typeof window!=='undefined') window.Prism=undefined
 
 	//get available langs, themes, & plugins
-	prism.components=await fetch(url+'components.js')
-	.then(res=>res.text())
+
+	prism.components=await fetchFile(url+'components.js')
 	.then(body=>new Function('components',body+'return components')())
 
 	//show all loadable langs
 	Object.entries(prism.components.languages)
-	.forEach(function([lang,val])
+	.filter(([key])=>key!=='meta')
+	.forEach(function([key,val])
 	{
-		if(lang==='meta') return
 		const
 		{alias}=val,
 		aliases=!alias?[]:
 				Array.isArray(alias)?alias:[alias]
 
-		aliases.concat([lang]).forEach(lang=>prism.languages[lang]=false)
+		aliases.concat([key]).forEach(lang=>prism.languages[lang]=false)
 	})
-	//@todo show loadable themes
+	//show loadable themes
+	prism.themes={}
+	Object.entries(prism.components.themes)
+	.filter(([key])=>key!=='meta')
+	.forEach(([key,theme])=>prism.themes[theme.title||theme]=false)
 	//@todo show loadable plugins
 
 	//load default langs
 	await prism.loadLanguages(['html','css','js','css-extras'])
-
 	return prism
 }
 //without dependencies prevents reloading langs to avoid avoid circular references
@@ -85,7 +94,7 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 
 	if(!arr.length) return
 
-	await prism.util.asyncMap(arr,async function(lang)
+	await asyncMap(arr,async function(lang)
 	{
 		const definition=prism.components.languages[lang]
 
@@ -95,8 +104,8 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 		if(!withoutDependencies&&definition.require) await prism.loadLanguages(definition.require)
 
 		delete prism.languages[lang]
-		await fetch(`./node_modules/prism/components/prism-${lang}.js`)
-		.then(res=>res.text())
+
+		await fetchFile(`./node_modules/prism/components/prism-${lang}.js`)
 		.then(body=>new Function('Prism',body)(prism))
 
 		// Reload dependents
@@ -118,23 +127,26 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 		return
 	})
 }
-//util
-prism.util.asyncMap=function(arr,cb)
+prism.loadThemes=async function(...themes2load)
 {
-	return arr.reduce(async function(promiseArr,item)
+	const
+	{themes}=prism.components,
+	themeKeys=themes2load.map(function(name)
 	{
-		return [...await promiseArr,await cb(item)]
-	},Promise.resolve([]))
-}
-//for old scripts that mutate the global scope
-prism.util.loadScript=function(src)
-{
-	return new Promise(function(onload,onerror)
-	{
-		document.head.appendChild
-		(
-			Object.assign(document.createElement('script'),{onerror,onload,src})
-		)
+		return themes[name]||
+		Object.entries(themes).find(function([key,theme])
+		{
+			return theme===name||theme.title===name
+		})[0]
 	})
-	.finally(rtn=>(rtn instanceof Error?{err:rtn}:{data:rtn}))
+	//@don't reload previously loaded themes, or themes that don't exist (undefined)
+	.filter(theme=>prism.themes[theme]===false),
+	keyPairs=await asyncMap(themeKeys,async function(theme)
+	{
+		const code=await fetchFile('./node_modules/prism/themes/'+theme+'.css')
+
+		return [theme,code]
+	})
+
+	keyPairs.forEach(([key,val])=>prism.themes[key]=val)
 }
