@@ -113,7 +113,6 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 
 		delete prism.languages[lang]
 
-
 		await prism.getLanguage(lang)
 		.then(body=>new Function('Prism',body)(prism))
 
