@@ -122,6 +122,30 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 		return
 	})
 }
+prism.loadThemes=async function(...themes2load)
+{
+	const
+	{themes}=prism.components,
+	themeKeys=themes2load.map(function(name)
+	{
+		return themes[name]||
+		Object.entries(themes).find(function([key,theme])
+		{
+			return theme===name||theme.title===name
+		})[0]
+	})
+	//@don't reload previously loaded themes, or themes that don't exist (undefined)
+	.filter(theme=>prism.themes[theme]===false),
+	keyPairs=await prism.util.asyncMap(themeKeys,async function(theme)
+	{
+		const code=await fetch('./node_modules/prism/themes/'+theme+'.css')
+		.then(res=>res.text())
+
+		return [theme,code]
+	})
+
+	keyPairs.forEach(([key,val])=>prism.themes[key]=val)
+}
 //util
 prism.util.asyncMap=function(arr,cb)
 {
