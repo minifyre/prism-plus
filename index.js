@@ -1,5 +1,31 @@
 const prism={util:{}}
 export default prism
+prism.getPeerDependents=function(mainLanguage)
+{
+	if(!prism.peerDependentsMap) prism.peerDependentsMap=prism.getPeerDependentsMap()
+
+	return prism.peerDependentsMap[mainLanguage]||[]
+}
+prism.getPeerDependentsMap=function()
+{
+	return Object.entries(prism.components.languages)
+	.reduce(function(peerDependentsMap,[language,value])
+	{
+		const {peerDependencies}=value
+
+		if(!peerDependencies) return peerDependentsMap//ignores meta as well
+
+		;(Array.isArray(peerDependencies)?peerDependencies:[peerDependencies])
+		.forEach(function(depenency)
+		{
+			if(!peerDependentsMap[depenency]) peerDependentsMap[depenency]=[]
+
+			peerDependentsMap[depenency].push(language)
+		})
+
+		return peerDependentsMap
+	},{})
+}
 prism.load=async function()
 {
 	const
@@ -91,32 +117,6 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 		
 		return
 	})
-}
-prism.getPeerDependentsMap=function()
-{
-	return Object.entries(prism.components.languages)
-	.reduce(function(peerDependentsMap,[language,value])
-	{
-		const {peerDependencies}=value
-
-		if(!peerDependencies) return peerDependentsMap//ignores meta as well
-
-		;(Array.isArray(peerDependencies)?peerDependencies:[peerDependencies])
-		.forEach(function(depenency)
-		{
-			if(!peerDependentsMap[depenency]) peerDependentsMap[depenency]=[]
-
-			peerDependentsMap[depenency].push(language)
-		})
-
-		return peerDependentsMap
-	},{})
-}
-prism.getPeerDependents=function(mainLanguage)
-{
-	if(!prism.peerDependentsMap) prism.peerDependentsMap=prism.getPeerDependentsMap()
-
-	return prism.peerDependentsMap[mainLanguage]||[]
 }
 //util
 prism.util.asyncMap=function(arr,cb)
