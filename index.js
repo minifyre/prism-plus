@@ -36,7 +36,7 @@ prism.load=async function()//core & components list
 	url='./node_modules/prism/',
 	{err}=await loadScript(url+'components/prism-core.js')
 	if(err) return console.error(err)
-	Object.assign(Prism.util,prism.util)//preserve custom utils
+	Object.assign(Prism.util,util)//preserve custom utils
 	Object.assign(prism,window.Prism)//merge with real prism object
 	window.Prism=undefined
 
