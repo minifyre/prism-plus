@@ -9,6 +9,7 @@ prism.getPath=function(type,id)
 	return `./node_modules/prism/`+prism.components[type].meta.path
 	.replace(/{id}/g,id)
 }
+prism.getLanguage=x=>fetchFile(util.addJSExt(prism.getPath('languages',x)))
 prism.getPeerDependents=function(mainLanguage)
 {
 	if(!prism.peerDependentsMap) prism.peerDependentsMap=prism.getPeerDependentsMap()
@@ -35,7 +36,7 @@ prism.getPeerDependentsMap=function()
 		return peerDependentsMap
 	},{})
 }
-prism.getTheme=async theme=>await fetchFile(prism.getPath('themes',theme))
+prism.getTheme=x=>fetchFile(prism.getPath('themes',x))
 prism.load=async function()//core & components list
 {
 	const
@@ -113,7 +114,7 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 		delete prism.languages[lang]
 
 
-		await fetchFile(util.addJSExt(prism.getPath('languages',lang)))
+		await prism.getLanguage(lang)
 		.then(body=>new Function('Prism',body)(prism))
 
 		// Reload dependents
