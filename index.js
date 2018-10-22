@@ -31,7 +31,7 @@ prism.load=async function()
 	//@todo show loadable plugins
 
 	//load default langs
-	await prism.loadLanguages(['html','css','js'])
+	await prism.loadLanguages(['html','css','js','css-extras'])
 
 	return prism
 }
