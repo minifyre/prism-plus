@@ -138,16 +138,17 @@ prism.loadThemes=async function(...themes2load)
 {
 	const
 	{themes}=prism.components,
-	themeKeys=themes2load.map(function(name)
+	themeKeys=themes2load
+	//@don't reload previously loaded themes, or themes that don't exist (undefined)
+	.filter(theme=>prism.themes[theme]===false)
+	.map(function(name)
 	{
 		return themes[name]||
 		Object.entries(themes).find(function([key,theme])
 		{
 			return theme===name||theme.title===name
 		})[0]
-	})
-	//@don't reload previously loaded themes, or themes that don't exist (undefined)
-	.filter(theme=>prism.themes[theme]===false),
+	}),
 	keyPairs=await asyncMap(themeKeys,async function(theme)
 	{
 		const code=await fetchFile(prism.getPath('themes',theme))
