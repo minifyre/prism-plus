@@ -26,7 +26,7 @@ prism.getPeerDependentsMap=function()
 		return peerDependentsMap
 	},{})
 }
-prism.load=async function()
+prism.load=async function()//core & components list
 {
 	const
 	url='./node_modules/prism/',
@@ -43,17 +43,21 @@ prism.load=async function()
 
 	//show all loadable langs
 	Object.entries(prism.components.languages)
-	.forEach(function([lang,val])
+	.filter(([key])=>key!=='meta')
+	.forEach(function([key,val])
 	{
-		if(lang==='meta') return
 		const
 		{alias}=val,
 		aliases=!alias?[]:
 				Array.isArray(alias)?alias:[alias]
 
-		aliases.concat([lang]).forEach(lang=>prism.languages[lang]=false)
+		aliases.concat([key]).forEach(lang=>prism.languages[lang]=false)
 	})
-	//@todo show loadable themes
+	//show loadable themes
+	prism.themes={}
+	Object.entries(prism.components.themes)
+	.filter(([key])=>key!=='meta')
+	.forEach(([key,theme])=>prism.themes[theme.title||theme]=false)
 	//@todo show loadable plugins
 
 	//load default langs
