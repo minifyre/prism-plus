@@ -31,12 +31,13 @@ prism.load=async function()
 	//@todo show loadable plugins
 
 	//load default langs
-	await prism.loadLanguages(prism,['html','css','js'])
+	await prism.loadLanguages(['html','css','js'])
 
 	return prism
 }
 //without dependencies prevents reloading langs to avoid avoid circular references
-prism.loadLanguages=async function(prism,aliases=[],withoutDependencies=false)
+//@todo use rest params and just check if the last one is false
+prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 {
 	const
 	langs=(Array.isArray(aliases)?aliases:[aliases])
@@ -65,7 +66,7 @@ prism.loadLanguages=async function(prism,aliases=[],withoutDependencies=false)
 		if(!definition) return console.warn('Language does not exist '+lang)
 
 		// Load dependencies first
-		if(!withoutDependencies&&definition.require) await prism.loadLanguages(prism,definition.require)
+		if(!withoutDependencies&&definition.require) await prism.loadLanguages(definition.require)
 
 		delete prism.languages[lang]
 		await fetch(`./node_modules/prism/components/prism-${lang}.js`)
@@ -86,7 +87,7 @@ prism.loadLanguages=async function(prism,aliases=[],withoutDependencies=false)
 			return false
 		})
 
-		if(dependents.length) prism.loadLanguages(prism,dependents,true)
+		if(dependents.length) prism.loadLanguages(dependents,true)
 		
 		return
 	})
