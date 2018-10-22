@@ -147,10 +147,7 @@ prism.loadThemes=async function(...themes2load)
 	{
 		return themes[name]||
 		Object.entries(themes)
-		.find(function([key,theme])
-		{
-			return theme===name||theme.title===name
-		})[0]
+		.find(([key,theme])=>theme===name||theme.title===name)[0]
 	})
 
 	await asyncMap(keys,async key=>prism.themes[key]=await prism.getTheme(key))
