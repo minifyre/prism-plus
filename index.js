@@ -38,7 +38,9 @@ prism.load=async function()//core & components list
 	if(err) return console.error(err)
 	Object.assign(Prism.util,util)//preserve custom utils
 	Object.assign(prism,window.Prism)//merge with real prism object
-	window.Prism=undefined
+
+	//remove prism from global scope to be more es6-module-like
+	if(typeof window!=='undefined') window.Prism=undefined
 
 	//get available langs, themes, & plugins
 
@@ -66,7 +68,6 @@ prism.load=async function()//core & components list
 
 	//load default langs
 	await prism.loadLanguages(['html','css','js','css-extras'])
-
 	return prism
 }
 //without dependencies prevents reloading langs to avoid avoid circular references
