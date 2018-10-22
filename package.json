@@ -1,0 +1,13 @@
+{
+	"name": "prism-plus",
+	"description": "A proof of concept ES6 module that makes loading prism components on demand easier.",
+	"homepage": "https://github.com/minifyre/prism-plus",
+	"license": "MIT",
+	"version": "0.5.0",
+	"dependencies": {
+        "prismJS":"PrismJS/prism"
+	},
+	"devDependencies": {
+		"cherub": "minifyre/cherub"
+	}
+}
