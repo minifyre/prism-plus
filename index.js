@@ -37,8 +37,8 @@ prism.load=async function()//core & components list
 	window.Prism=undefined
 
 	//get available langs, themes, & plugins
-	prism.components=await fetch(url+'components.js')
-	.then(res=>res.text())
+
+	prism.components=await prism.util.fetchFile(url+'components.js')
 	.then(body=>new Function('components',body+'return components')())
 
 	//show all loadable langs
@@ -99,8 +99,8 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 		if(!withoutDependencies&&definition.require) await prism.loadLanguages(definition.require)
 
 		delete prism.languages[lang]
-		await fetch(`./node_modules/prism/components/prism-${lang}.js`)
-		.then(res=>res.text())
+
+		await prism.util.fetchFile(`./node_modules/prism/components/prism-${lang}.js`)
 		.then(body=>new Function('Prism',body)(prism))
 
 		// Reload dependents
@@ -138,8 +138,7 @@ prism.loadThemes=async function(...themes2load)
 	.filter(theme=>prism.themes[theme]===false),
 	keyPairs=await prism.util.asyncMap(themeKeys,async function(theme)
 	{
-		const code=await fetch('./node_modules/prism/themes/'+theme+'.css')
-		.then(res=>res.text())
+		const code=await prism.util.fetchFile('./node_modules/prism/themes/'+theme+'.css')
 
 		return [theme,code]
 	})
@@ -154,6 +153,7 @@ prism.util.asyncMap=function(arr,cb)
 		return [...await promiseArr,await cb(item)]
 	},Promise.resolve([]))
 }
+prism.util.fetchFile=url=>fetch(url).then(res=>res.text())
 //for old scripts that mutate the global scope
 prism.util.loadScript=function(src)
 {
