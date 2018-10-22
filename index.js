@@ -1,5 +1,9 @@
-const prism={util:{}}
+import util from './util.js'
+const prism={util}
 export default prism
+
+const {asyncMap,fetchFile,loadScript}=util
+//core
 prism.getPeerDependents=function(mainLanguage)
 {
 	if(!prism.peerDependentsMap) prism.peerDependentsMap=prism.getPeerDependentsMap()
@@ -30,7 +34,7 @@ prism.load=async function()//core & components list
 {
 	const
 	url='./node_modules/prism/',
-	{err}=await prism.util.loadScript(url+'components/prism-core.js')
+	{err}=await loadScript(url+'components/prism-core.js')
 	if(err) return console.error(err)
 	Object.assign(Prism.util,prism.util)//preserve custom utils
 	Object.assign(prism,window.Prism)//merge with real prism object
@@ -38,7 +42,7 @@ prism.load=async function()//core & components list
 
 	//get available langs, themes, & plugins
 
-	prism.components=await prism.util.fetchFile(url+'components.js')
+	prism.components=await fetchFile(url+'components.js')
 	.then(body=>new Function('components',body+'return components')())
 
 	//show all loadable langs
@@ -89,7 +93,7 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 
 	if(!arr.length) return
 
-	await prism.util.asyncMap(arr,async function(lang)
+	await asyncMap(arr,async function(lang)
 	{
 		const definition=prism.components.languages[lang]
 
@@ -100,7 +104,7 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 
 		delete prism.languages[lang]
 
-		await prism.util.fetchFile(`./node_modules/prism/components/prism-${lang}.js`)
+		await fetchFile(`./node_modules/prism/components/prism-${lang}.js`)
 		.then(body=>new Function('Prism',body)(prism))
 
 		// Reload dependents
@@ -136,33 +140,12 @@ prism.loadThemes=async function(...themes2load)
 	})
 	//@don't reload previously loaded themes, or themes that don't exist (undefined)
 	.filter(theme=>prism.themes[theme]===false),
-	keyPairs=await prism.util.asyncMap(themeKeys,async function(theme)
+	keyPairs=await asyncMap(themeKeys,async function(theme)
 	{
-		const code=await prism.util.fetchFile('./node_modules/prism/themes/'+theme+'.css')
+		const code=await fetchFile('./node_modules/prism/themes/'+theme+'.css')
 
 		return [theme,code]
 	})
 
 	keyPairs.forEach(([key,val])=>prism.themes[key]=val)
-}
-//util
-prism.util.asyncMap=function(arr,cb)
-{
-	return arr.reduce(async function(promiseArr,item)
-	{
-		return [...await promiseArr,await cb(item)]
-	},Promise.resolve([]))
-}
-prism.util.fetchFile=url=>fetch(url).then(res=>res.text())
-//for old scripts that mutate the global scope
-prism.util.loadScript=function(src)
-{
-	return new Promise(function(onload,onerror)
-	{
-		document.head.appendChild
-		(
-			Object.assign(document.createElement('script'),{onerror,onload,src})
-		)
-	})
-	.finally(rtn=>(rtn instanceof Error?{err:rtn}:{data:rtn}))
 }
