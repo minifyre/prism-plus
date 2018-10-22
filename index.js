@@ -150,7 +150,7 @@ prism.loadThemes=async function(...themes2load)
 	.filter(theme=>prism.themes[theme]===false),
 	keyPairs=await asyncMap(themeKeys,async function(theme)
 	{
-		const code=await fetchFile('./node_modules/prism/themes/'+theme+'.css')
+		const code=await fetchFile(prism.getPath('themes',theme))
 
 		return [theme,code]
 	})
