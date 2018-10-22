@@ -135,19 +135,21 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 		return
 	})
 }
-prism.loadThemes=async function(...themes2load)
+prism.loadThemes=async function(...names)
 {
 	const
 	{themes}=prism.components,
-	keys=themes2load
+	keys=names
 	//don't reload previously loaded/non-existant themes
 	.filter(theme=>prism.themes[theme]===false)
 	.map(function(name)
 	{
-		return themes[name]||
-		Object.entries(themes)
-		.find(([key,theme])=>theme===name||theme.title===name)[0]
+		return [name,
+			themes[name]||
+			Object.entries(themes)
+			.find(([key,theme])=>theme===name||theme.title===name)[0]
+		]
 	})
 
-	await asyncMap(keys,async key=>prism.themes[key]=await prism.getTheme(key))
+	await asyncMap(keys,async ([name,key])=>prism.themes[name]=await prism.getTheme(key))
 }
