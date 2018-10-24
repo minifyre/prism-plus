@@ -124,7 +124,7 @@ prism.loadLanguages=async function(aliases=[],withoutDependencies=false)
 			// we want to reload it.
 			if(prism.languages[dependent])
 			{
-				delete Prism.languages[dependent]
+				delete prism.languages[dependent]
 				return true
 			}
 			return false
